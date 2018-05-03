@@ -10,7 +10,7 @@ import UIKit
 
 class TodoListVC: UITableViewController {
     
-    let placeHolder = ["buy eggs", "eat meals", "take showers"]
+    var placeHolder = ["buy eggs", "eat meals", "take showers"]
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -41,6 +41,30 @@ class TodoListVC: UITableViewController {
             tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
         }
     }
+    
+    // MARK: - Add New Items
+    
+    @IBAction func addBtnPressed(_ sender: UIBarButtonItem) {
+        
+        var textField = UITextField()
+        
+        let alert = UIAlertController(title: "Add Todo Item", message: "", preferredStyle: .alert)
+        
+        let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
+            self.placeHolder.append(textField.text!)
+            self.tableView.reloadData()
+        }
+        
+        alert.addTextField { (alertTextField) in
+            alertTextField.placeholder = "Create new item"
+            textField = alertTextField  // 创建一个指向alertTextField的共用var
+        }
+        
+        alert.addAction(action)
+        present(alert, animated: true, completion: nil)
+        
+    }
+    
     
 
 }
