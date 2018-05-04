@@ -10,11 +10,16 @@ import UIKit
 
 class TodoListVC: UITableViewController {
     
+    var defaults = UserDefaults.standard
+    
     var placeHolder = ["buy eggs", "eat meals", "take showers"]
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+        
+        if let items = defaults.array(forKey: "TodoListArray") as? [String] {
+            placeHolder = items
+        }
     }
     
     //MARK: - Tableview Datasource Methods
@@ -52,6 +57,9 @@ class TodoListVC: UITableViewController {
         
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             self.placeHolder.append(textField.text!)
+            
+            self.defaults.set(self.placeHolder, forKey: "TodoListArray")
+            
             self.tableView.reloadData()
         }
         
