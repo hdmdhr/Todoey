@@ -12,25 +12,43 @@ class TodoListVC: UITableViewController {
     
     var defaults = UserDefaults.standard
     
-    var placeHolder = ["buy eggs", "eat meals", "take showers"]
+    var itemArray = [Item]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if let items = defaults.array(forKey: "TodoListArray") as? [String] {
-            placeHolder = items
+        let item1 = Item()
+        item1.title = "things to do 1"
+        itemArray.append(item1)
+
+        let item2 = Item()
+        item2.title = "things to do 2"
+        itemArray.append(item2)
+        
+        let item3 = Item()
+        item3.title = "things to do 3"
+        itemArray.append(item3)
+        
+        //MARK: Load data from database (persistence)
+        
+        if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
+            itemArray = items
         }
     }
     
     //MARK: - Tableview Datasource Methods
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return placeHolder.count
+        return itemArray.count
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
         let cell = tableView.dequeueReusableCell(withIdentifier: "TodoCell", for: indexPath)
-        cell.textLabel?.text = placeHolder[indexPath.row]
+        let item = itemArray[indexPath.row]
+        cell.textLabel?.text = item.title
+
+        cell.accessoryType = item.done ? .checkmark : .none  // 检查是否显示√
         
         return cell
     }
@@ -38,13 +56,12 @@ class TodoListVC: UITableViewController {
     // MARK: - Tableview Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
         tableView.deselectRow(at: indexPath, animated: true)   // 选中后一闪而过
         
-        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-        } else {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-        }
+        itemArray[indexPath.row].done = !itemArray[indexPath.row].done  // 反向修改.done
+        tableView.reloadData()
+        
     }
     
     // MARK: - Add New Items
@@ -56,9 +73,13 @@ class TodoListVC: UITableViewController {
         let alert = UIAlertController(title: "Add Todo Item", message: "", preferredStyle: .alert)
         
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
-            self.placeHolder.append(textField.text!)
             
-            self.defaults.set(self.placeHolder, forKey: "TodoListArray")
+            let newItem = Item()
+            newItem.title = textField.text!
+            
+            self.itemArray.append(newItem)
+            
+            self.defaults.set(self.itemArray, forKey: "TodoListArray")  // 储存数据
             
             self.tableView.reloadData()
         }
