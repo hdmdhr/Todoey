@@ -10,30 +10,25 @@ import UIKit
 
 class TodoListVC: UITableViewController {
     
-    var defaults = UserDefaults.standard
+//    var defaults = UserDefaults.standard
     
     var itemArray = [Item]()
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Item.plist")
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let item1 = Item()
-        item1.title = "things to do 1"
-        itemArray.append(item1)
-
-        let item2 = Item()
-        item2.title = "things to do 2"
-        itemArray.append(item2)
+        print(dataFilePath ?? "abc")
         
-        let item3 = Item()
-        item3.title = "things to do 3"
-        itemArray.append(item3)
+//        hardCodedItems()
         
-        //MARK: Load data from database (persistence)
+        //MARK: 在数据库中读取数据 (persistence)
         
-        if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
-            itemArray = items
-        }
+//        if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
+//            itemArray = items  }
+        
+        loadItems()
+        
     }
     
     //MARK: - Tableview Datasource Methods
@@ -60,8 +55,7 @@ class TodoListVC: UITableViewController {
         tableView.deselectRow(at: indexPath, animated: true)   // 选中后一闪而过
         
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done  // 反向修改.done
-        tableView.reloadData()
-        
+        saveItems()
     }
     
     // MARK: - Add New Items
@@ -79,9 +73,9 @@ class TodoListVC: UITableViewController {
             
             self.itemArray.append(newItem)
             
-            self.defaults.set(self.itemArray, forKey: "TodoListArray")  // 储存数据
-            
-            self.tableView.reloadData()
+            //MARK: 储存itemArray中的数据
+//            self.defaults.set(self.itemArray, forKey: "TodoListArray")
+           self.saveItems()
         }
         
         alert.addTextField { (alertTextField) in
@@ -94,7 +88,43 @@ class TodoListVC: UITableViewController {
         
     }
     
+    // MARK: - Convinient Methods
     
+    func saveItems(){
+        let encoder = PropertyListEncoder()
+        do {
+            let data = try encoder.encode(itemArray)
+            try data.write(to: dataFilePath!)
+        } catch {
+            print("Error with encoding, \(error)")
+        }
+        tableView.reloadData()
+    }
+    
+    func loadItems(){
+        let decoder = PropertyListDecoder()
+        if let data = try? Data(contentsOf: dataFilePath!) {
+            do {
+                itemArray = try decoder.decode([Item].self, from: data)
+            } catch {
+                print("Decoding error, \(error)")
+            }
+        }
+    }
+    
+    func hardCodedItems() {
+        let item1 = Item()
+        item1.title = "things to do 1"
+        itemArray.append(item1)
+        
+        let item2 = Item()
+        item2.title = "things to do 2"
+        itemArray.append(item2)
+        
+        let item3 = Item()
+        item3.title = "things to do 3"
+        itemArray.append(item3)
+    }
 
 }
 
