@@ -9,7 +9,7 @@
 import UIKit
 import RealmSwift
 
-class TodoListVC: UITableViewController {
+class TodoListVC: SwipeTableViewController {
     let realm = try! Realm()
     
     //    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Item.plist")
@@ -23,7 +23,7 @@ class TodoListVC: UITableViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+                
 //        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
     }
@@ -36,7 +36,8 @@ class TodoListVC: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "TodoCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        
         if let item = items?[indexPath.row] {
             cell.textLabel?.text = item.title
             cell.accessoryType = item.done ? .checkmark : .none  // 检查是否显示√
@@ -99,6 +100,20 @@ class TodoListVC: UITableViewController {
         present(alert, animated: true, completion: nil)
         
     }
+    
+    
+    // MARK: - Delete Data by Swipe
+    
+    override func updateModel(at indexPath: IndexPath) {
+        do {
+            try self.realm.write {
+                self.realm.delete(items![indexPath.row])
+            }
+        } catch {
+            fatalError("Error with deleting data, \(error)")
+        }
+    }
+    
     
     // MARK: - Convinient Methods
     
