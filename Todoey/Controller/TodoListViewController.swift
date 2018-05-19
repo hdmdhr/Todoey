@@ -8,16 +8,18 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 class TodoListVC: SwipeTableViewController {
     let realm = try! Realm()
     
     //    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Item.plist")
     
+    @IBOutlet weak var searchBar: UISearchBar!
     var items: Results<Item>?
     var category : Category? {
         didSet{
-            loadAllItems()  // load all the items under current category
+            loadItemsUnderCurrentCategory()  // load all the items under current category
         }
     }
 
@@ -26,6 +28,18 @@ class TodoListVC: SwipeTableViewController {
                 
 //        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        
+        guard let navBar = navigationController?.navigationBar else { fatalError() }
+        guard let barColor = UIColor(hexString: category!.colorHex) else { fatalError() }
+        navBar.barTintColor = barColor
+        navBar.tintColor = ContrastColorOf(barColor, returnFlat: true)
+        navBar.largeTitleTextAttributes = [NSAttributedStringKey.foregroundColor : navBar.tintColor]
+        
+        
+        searchBar.barTintColor = UIColor(hexString: category!.colorHex)
     }
     
     //MARK: - Tableview Datasource
@@ -41,9 +55,11 @@ class TodoListVC: SwipeTableViewController {
         if let item = items?[indexPath.row] {
             cell.textLabel?.text = item.title
             cell.accessoryType = item.done ? .checkmark : .none  // 检查是否显示√
-        } else {
-            cell.textLabel?.text = "no item added yet"
+            
+            cell.backgroundColor = UIColor(hexString: category!.colorHex)?.darken(byPercentage: (CGFloat(indexPath.row) / CGFloat(items!.count)) * 0.25)
+            cell.textLabel?.textColor = ContrastColorOf(cell.backgroundColor!, returnFlat: true)
         }
+        
         return cell
     }
 
@@ -102,7 +118,7 @@ class TodoListVC: SwipeTableViewController {
     }
     
     
-    // MARK: - Delete Data by Swipe
+    // MARK: - Delete Data by Swipe to Left
     
     override func updateModel(at indexPath: IndexPath) {
         do {
@@ -114,10 +130,21 @@ class TodoListVC: SwipeTableViewController {
         }
     }
     
+    // MARK: - Change Color by Swipe to Right
+    
+    override func changeColor(at indexPath: IndexPath) {
+        try! realm.write {
+            category!.colorHex = RandomFlatColor().hexValue()
+            
+            tableView.reloadData()
+            viewWillAppear(true)
+        }
+    }
+    
     
     // MARK: - Convinient Methods
     
-    func loadAllItems(){
+    func loadItemsUnderCurrentCategory(){
             items = category?.items.sorted(byKeyPath: "dateCreated", ascending: true)
         
             tableView.reloadData()
@@ -137,7 +164,7 @@ extension TodoListVC: UISearchBarDelegate {
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {  // 动态检索
         if searchBar.text?.count == 0 {
-            loadAllItems()
+            loadItemsUnderCurrentCategory()
         } else {
             items = items?.filter("title CONTAINS[cd] %@", searchText).sorted(byKeyPath: "dateCreated")
             tableView.reloadData()

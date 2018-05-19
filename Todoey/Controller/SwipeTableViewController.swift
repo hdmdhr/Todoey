@@ -13,7 +13,7 @@ class SwipeTableViewController: UITableViewController, SwipeTableViewCellDelegat
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        tableView.rowHeight = 3 * ( #imageLiteral(resourceName: "Trash-Icon").size.height)
+        tableView.rowHeight = 3 * ( #imageLiteral(resourceName: "color-wheel").size.height)
         tableView.separatorStyle = .none
     }
     
@@ -23,6 +23,9 @@ class SwipeTableViewController: UITableViewController, SwipeTableViewCellDelegat
         
         cell.delegate = self
         
+        cell.textLabel?.numberOfLines = 0
+        cell.textLabel?.lineBreakMode = .byWordWrapping
+        
         return cell
     }
     
@@ -31,7 +34,16 @@ class SwipeTableViewController: UITableViewController, SwipeTableViewCellDelegat
     
     
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
-        guard orientation == .right else { return nil }
+        guard orientation == .right else {  // .left时可以改变颜色
+            let changeColorAction = SwipeAction(style: .default, title: "Change") { action, indexPath in  // 修改颜色并修改category数据库
+                self.changeColor(at: indexPath)
+            }
+            
+            // customize the action appearance
+            changeColorAction.image = UIImage(named: "color-wheel")
+            
+            return [changeColorAction]
+        }
         
         let deleteAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
             self.updateModel(at: indexPath)
@@ -47,13 +59,22 @@ class SwipeTableViewController: UITableViewController, SwipeTableViewCellDelegat
     
     func tableView(_ tableView: UITableView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeTableOptions {
         var options = SwipeTableOptions()
-        options.expansionStyle = .destructive
+
+        if orientation == .right{
+            options.expansionStyle = .destructive
+        } else {
+            options.expansionStyle = .selection
+        }
         return options
     }
 
     // MARK: - Convenient Methods
     
     func updateModel(at indexPath: IndexPath) {
+        
+    }
+    
+    func changeColor(at indexPath: IndexPath) {
         
     }
 

@@ -14,17 +14,18 @@ class CategoryViewController: SwipeTableViewController {
     
     var realm = try! Realm()
 
-    var categories: Results<Category>?   // IMPORTANT: Auto-update when realm updated
-//        didSet{
-//            tableView.reloadData()
-//        }
+    var categories: Results<Category>?  // IMPORTANT: Auto-update when realm updated
     
     override func viewDidLoad() {
         super.viewDidLoad()
             loadCategory()
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        tableView.reloadData()
+    }
 
-    // MARK: - Table view data source
+    // MARK: - TableView data source
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return categories?.count ?? 1
@@ -34,7 +35,9 @@ class CategoryViewController: SwipeTableViewController {
        
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
-        cell.backgroundColor = RandomFlatColor()
+        cell.backgroundColor = UIColor(hexString: categories?[indexPath.row].colorHex ?? "0080FF")
+        cell.textLabel?.textColor = ContrastColorOf(cell.backgroundColor!, returnFlat: true)
+        
         cell.textLabel?.text = categories?[indexPath.row].name ?? "no categories added yet"
         return cell
     }
@@ -50,9 +53,10 @@ class CategoryViewController: SwipeTableViewController {
         let alert = UIAlertController(title: "Create a New Category", message: nil, preferredStyle: .alert)
         
         let action = UIAlertAction(title: "Add", style: .default) { (action) in
-            // creat, append, save data, reload table
+            // creat, modify, append, save, reload table
             let newCategory = Category()
             newCategory.name = textField.text ?? "default category"
+            newCategory.colorHex = RandomFlatColor().hexValue()
 
             self.save(category: newCategory)
         }
@@ -66,19 +70,29 @@ class CategoryViewController: SwipeTableViewController {
         present(alert, animated: true)
     }
     
-    // MARK: - Delete Data by Swipe
+    // MARK: - Delete Data by Swipe to Left
     
     override func updateModel(at indexPath: IndexPath) {
         do {
-            try self.realm.write {
-                self.realm.delete(categories![indexPath.row].items)
-                self.realm.delete(categories![indexPath.row])
+            try realm.write {
+                realm.delete(categories![indexPath.row].items)
+                realm.delete(categories![indexPath.row])
             }
         } catch {
             fatalError("Error with deleting data, \(error)")
         }
     }
     
+    // MARK: - Change Color by Swipe to Right
+    
+    override func changeColor(at indexPath: IndexPath) {
+        try! realm.write {
+            if let cates = categories {
+                cates[indexPath.row].colorHex = RandomFlatColor().hexValue()
+                tableView.reloadData()
+            }
+        }
+    }
 
     // MARK: - TableView Delegate Methods, Navigation
     
